@@ -27,3 +27,11 @@ docker build -t dsy1104-backend .
 ```
 
 El entorno completo (MySQL + backend + frontend) se levanta desde el repositorio `dsy1104-meta`.
+
+## CI y despliegue en EC2
+
+El workflow `.github/workflows/ci.yml` se ejecuta en cada push/PR a `main` (o a mano con *Run workflow*):
+compila con Java 17, corre las pruebas y publica el artefacto `dsy1104-backend-<sha>` con `app.jar`,
+su checksum, un `app.env.example` y la unidad systemd `dsy1104-backend.service`.
+
+Los pasos para instalarlo en una EC2 del AWS Academy Learner Lab están en [`deploy/DEPLOY.md`](deploy/DEPLOY.md).

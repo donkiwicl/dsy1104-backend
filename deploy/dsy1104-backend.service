@@ -1,0 +1,15 @@
+[Unit]
+Description=DSY1104 backend (Spring Boot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/opt/dsy1104-backend
+EnvironmentFile=/opt/dsy1104-backend/app.env
+ExecStart=/usr/bin/java -Xmx512m -jar /opt/dsy1104-backend/app.jar
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

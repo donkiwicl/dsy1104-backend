@@ -1,0 +1,58 @@
+name: CI
+
+# Compila y prueba el backend; publica el JAR como artefacto
+# para desplegarlo manualmente en una EC2 del AWS Academy Learner Lab.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compilar, probar y empaquetar
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17 (Temurin) con caché de Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compilar y ejecutar pruebas (perfil H2 por defecto)
+        run: mvn -B clean verify
+
+      - name: Armar paquete de despliegue
+        run: |
+          mkdir -p dist
+          cp target/app.jar dist/app.jar
+          cp deploy/app.env.example deploy/dsy1104-backend.service deploy/DEPLOY.md dist/
+          sha256sum dist/app.jar > dist/app.jar.sha256
+          echo "Commit: ${GITHUB_SHA}" > dist/BUILD_INFO.txt
+          echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> dist/BUILD_INFO.txt
+          ls -lh dist
+
+      - name: Publicar artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsy1104-backend-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publicar reportes de pruebas (si fallan)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
